@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSync - IoT Smart Home Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: var(--primary);
+            color: white;
+            transition: var(--transition);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .nav-links li {
+            padding: 0;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+            width: 25px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-controls button {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            margin-left: 15px;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .user-controls button:hover {
+            color: var(--secondary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: var(--success);
+        }
+
+        .status-offline {
+            background: var(--accent);
+        }
+
+        .status-warning {
+            background: var(--warning);
+        }
+
+        .activity-feed {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Device Control Styles */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .device-control {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .device-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .device-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-value {
+            margin-left: 10px;
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn.active {
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--secondary);
+        }
+
+        .scene-btn {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Architecture Styles */
+        .architecture-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .architecture-diagram {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+
+        .layer {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .layer:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .layer-1 { background: #3498db; }
+        .layer-2 { background: #2ecc71; }
+        .layer-3 { background: #e74c3c; }
+        .layer-4 { background: #f39c12; }
+        .layer-5 { background: #9b59b6; }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .legend-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        /* Objective Styles */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+            transition: var(--transition);
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1);
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .spec-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .spec-card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Exit Section Styles */
+        .exit-container {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header h2, .nav-links span {
+                display: none;
+            }
+            
+            .nav-links a {
+                justify-content: center;
+                padding: 15px 0;
+            }
+            
+            .nav-links i {
+                margin-right: 0;
+                font-size: 1.5rem;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-grid, .specs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .nav-links {
+                display: flex;
+                justify-content: space-around;
+                padding: 10px 0;
+            }
+            
+            .nav-links li {
+                flex: 1;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>HomeSync</h2>
+                <p>IoT Smart Home Dashboard</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-target="dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#" class="nav-link" data-target="objective"><i class="fas fa-bullseye"></i> <span>Objective</span></a></li>
+                <li><a href="#" class="nav-link" data-target="architecture"><i class="fas fa-sitemap"></i> <span>Architecture</span></a></li>
+                <li><a href="#" class="nav-link" data-target="prototype"><i class="fas fa-sliders-h"></i> <span>Prototype</span></a></li>
+                <li><a href="#" class="nav-link" data-target="exit"><i class="fas fa-sign-out-alt"></i> <span>Exit</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-controls">
+                    <button id="notifications-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button id="settings-btn"><i class="fas fa-cog"></i></button>
+                    <button id="user-btn"><i class="fas fa-user-circle"></i></button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="dashboard-grid">
+                    <!-- Device Status Cards -->
+                    <div class="card" data-device="lighting">
+                        <div class="card-header">
+                            <div class="card-title">Lighting System</div>
+                            <div class="card-icon" style="background-color: #f39c12;">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Devices: <span id="lighting-count">8</span> connected</p>
+                            <p>Brightness: <span id="lighting-brightness">75%</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="climate">
+                        <div class="card-header">
+                            <div class="card-title">Climate Control</div>
+                            <div class="card-icon" style="background-color: #3498db;">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Temperature: <span id="current-temp">72°F</span></p>
+                            <p>Humidity: <span id="current-humidity">45%</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="security">
+                        <div class="card-header">
+                            <div class="card-title">Security System</div>
+                            <div class="card-icon" style="background-color: #e74c3c;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-warning" id="security-status"></span> Status: <span id="security-status-text">Armed</span></p>
+                            <p>Cameras: <span id="camera-count">4</span> active</p>
+                            <p>Sensors: <span id="sensor-status">12 normal</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="energy">
+                        <div class="card-header">
+                            <div class="card-title">Energy Management</div>
+                            <div class="card-icon" style="background-color: #2ecc71;">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Usage: <span id="energy-usage">1.2</span> kW</p>
+                            <p>Solar: <span id="solar-production">0.8</span> kW generated</p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="entertainment">
+                        <div class="card-header">
+                            <div class="card-title">Entertainment</div>
+                            <div class="card-icon" style="background-color: #9b59b6;">
+                                <i class="fas fa-tv"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Devices: <span id="entertainment-count">3</span> connected</p>
+                            <p>Current: <span id="entertainment-active">Living Room TV</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="appliances">
+                        <div class="card-header">
+                            <div class="card-title">Appliances</div>
+                            <div class="card-icon" style="background-color: #1abc9c;">
+                                <i class="fas fa-blender"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Devices: <span id="appliance-count">5</span> connected</p>
+                            <p>Active: <span id="appliance-active">Refrigerator, Oven</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="irrigation">
+                        <div class="card-header">
+                            <div class="card-title">Irrigation</div>
+                            <div class="card-icon" style="background-color: #34495e;">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-offline" id="irrigation-status"></span> Status: <span id="irrigation-status-text">Offline</span></p>
+                            <p>Zones: <span id="zone-count">4</span> configured</p>
+                            <p>Next watering: <span id="next-watering">Tomorrow 6:00 AM</span></p>
+                        </div>
+                    </div>
+
+                    <div class="card" data-device="pool">
+                        <div class="card-header">
+                            <div class="card-title">Pool & Spa</div>
+                            <div class="card-icon" style="background-color: #e67e22;">
+                                <i class="fas fa-swimming-pool"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><span class="status-indicator status-online"></span> Status: Online</p>
+                            <p>Temperature: <span id="pool-temp">82°F</span></p>
+                            <p>Filter: <span id="filter-status">Running</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Activity Feed</div>
+                        <button class="btn btn-secondary" id="clear-activity">Clear</button>
+                    </div>
+                    <div class="activity-feed" id="activity-feed">
+                        <!-- Activity items will be added dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Objective Section -->
+            <section id="objective" class="content-section">
+                <div class="card">
+                    <h2>Project Objective</h2>
+                    <p>HomeSync is a centralized IoT smart home management system designed to provide seamless control and monitoring of all connected smart home devices through an intuitive web interface.</p>
+                    
+                    <h3 style="margin-top: 20px;">Key Features</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card" data-feature="realtime">
+                            <div class="feature-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <h3>Real-time Synchronization</h3>
+                            <p>Live updates and control of all connected devices with minimal latency.</p>
+                        </div>
+                        <div class="feature-card" data-feature="responsive">
+                            <div class="feature-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <h3>Responsive Design</h3>
+                            <p>Optimized for all devices including desktop, tablet, and mobile.</p>
+                        </div>
+                        <div class="feature-card" data-feature="secure">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3>Secure Architecture</h3>
+                            <p>Five-layer security model to protect your home and data.</p>
+                        </div>
+                        <div class="feature-card" data-feature="energy">
+                            <div class="feature-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3>Energy Efficient</h3>
+                            <p>Smart energy management to reduce consumption and costs.</p>
+                        </div>
+                    </div>
+                    
+                    <h3>Technical Specifications</h3>
+                    <div class="specs-grid">
+                        <div class="spec-card">
+                            <h4>Frontend Technologies</h4>
+                            <ul>
+                                <li>HTML5, CSS3, JavaScript ES6+</li>
+                                <li>Responsive Grid Layout</li>
+                                <li>Real-time Data Simulation</li>
+                                <li>Cross-browser Compatibility</li>
+                            </ul>
+                        </div>
+                        <div class="spec-card">
+                            <h4>System Architecture</h4>
+                            <ul>
+                                <li>Hybrid Cloud-Edge Computing</li>
+                                <li>5-Layer Security Model</li>
+                                <li>Modular Device Integration</li>
+                                <li>RESTful API Design</li>
+                            </ul>
+                        </div>
+                        <div class="spec-card">
+                            <h4>Device Support</h4>
+                            <ul>
+                                <li>Smart Lighting Systems</li>
+                                <li>Climate Control</li>
+                                <li>Security & Surveillance</li>
+                                <li>Energy Management</li>
+                                <li>Entertainment Systems</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="architecture" class="content-section">
+                <div class="architecture-container">
+                    <h2>System Architecture</h2>
+                    <p>HomeSync utilizes a 5-layer hybrid cloud-edge architecture for optimal performance and security.</p>
+                    
+                    <div class="architecture-diagram">
+                        <div class="layer layer-1" data-layer="presentation">
+                            <h3>Presentation Layer</h3>
+                            <p>User Interface & Experience</p>
+                        </div>
+                        <div class="layer layer-2" data-layer="application">
+                            <h3>Application Layer</h3>
+                            <p>Business Logic & Processing</p>
+                        </div>
+                        <div class="layer layer-3" data-layer="integration">
+                            <h3>Integration Layer</h3>
+                            <p>API Gateway & Protocol Translation</p>
+                        </div>
+                        <div class="layer layer-4" data-layer="edge">
+                            <h3>Edge Computing Layer</h3>
+                            <p>Local Processing & Real-time Control</p>
+                        </div>
+                        <div class="layer layer-5" data-layer="device">
+                            <h3>Device Layer</h3>
+                            <p>Physical IoT Devices & Sensors</p>
+                        </div>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item" data-layer="presentation">
+                            <div class="legend-color" style="background-color: #3498db;"></div>
+                            <span>Presentation Layer</span>
+                        </div>
+                        <div class="legend-item" data-layer="application">
+                            <div class="legend-color" style="background-color: #2ecc71;"></div>
+                            <span>Application Layer</span>
+                        </div>
+                        <div class="legend-item" data-layer="integration">
+                            <div class="legend-color" style="background-color: #e74c3c;"></div>
+                            <span>Integration Layer</span>
+                        </div>
+                        <div class="legend-item" data-layer="edge">
+                            <div class="legend-color" style="background-color: #f39c12;"></div>
+                            <span>Edge Computing Layer</span>
+                        </div>
+                        <div class="legend-item" data-layer="device">
+                            <div class="legend-color" style="background-color: #9b59b6;"></div>
+                            <span>Device Layer</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Architecture Benefits</h3>
+                        <ul>
+                            <li><strong>Low Latency:</strong> Edge computing reduces response times for critical operations</li>
+                            <li><strong>Scalability:</strong> Cloud integration allows for unlimited device connections</li>
+                            <li><strong>Reliability:</strong> Hybrid approach ensures operation even during internet outages</li>
+                            <li><strong>Security:</strong> Layered security model protects at every level</li>
+                            <li><strong>Flexibility:</strong> Modular design supports various device protocols and standards</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prototype Section -->
+            <section id="prototype" class="content-section">
+                <h2>Interactive Device Controls</h2>
+                <p>Experience the full functionality of HomeSync with these interactive device control panels.</p>
+                
+                <div class="control-panel">
+                    <!-- Lighting Control -->
+                    <div class="device-control">
+                        <div class="device-header">
+                            <div class="device-icon" style="background-color: #f39c12;">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="device-title">Lighting Control</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Master Brightness</label>
+                            <div class="slider-container">
+                                <input type="range" min="0" max="100" value="75" class="slider" id="brightness-slider">
+                                <span class="slider-value" id="brightness-value">75%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Color Temperature</label>
+                            <div class="slider-container">
+                                <input type="range" min="0" max="100" value="50" class="slider" id="temp-slider">
+                                <span class="slider-value" id="temp-value">Neutral</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Individual Lights</label>
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                                <div>
+                                    <p>Living Room</p>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked data-light="living-room">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <p>Kitchen</p>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked data-light="kitchen">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <p>Bedroom</p>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" data-light="bedroom">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Lighting Scenes</label>
+                            <div class="button-group">
+                                <button class="btn btn-primary scene-btn" data-scene="home">Home</button>
+                                <button class="btn btn-secondary scene-btn" data-scene="movie">Movie</button>
+                                <button class="btn btn-secondary scene-btn" data-scene="sleep">Sleep</button>
+                                <button class="btn btn-secondary scene-btn" data-scene="party">Party</button>
+                                <button class="btn btn-secondary scene-btn" data-scene="read">Read</button>
+                                <button class="btn btn-secondary scene-btn" data-scene="kitchen">Kitchen</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Climate Control -->
+                    <div class="device-control">
+                        <div class="device-header">
+                            <div class="device-icon" style="background-color: #3498db;">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="device-title">Climate Control</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Temperature Setting</label>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <button class="btn btn-secondary" id="temp-down">-</button>
+                                <div style="text-align: center; flex: 1;">
+                                    <div style="font-size: 2rem; font-weight: bold;" id="temp-display">72°F</div>
+                                    <div>Current: <span id="current-climate-temp">70°F</span></div>
+                                </div>
+                                <button class="btn btn-secondary" id="temp-up">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Operation Mode</label>
+                            <div class="button-group">
+                                <button class="btn btn-primary mode-btn active" data-mode="cool">Cool</button>
+                                <button class="btn btn-secondary mode-btn" data-mode="heat">Heat</button>
+                                <button class="btn btn-secondary mode-btn" data-mode="auto">Auto</button>
+                                <button class="btn btn-secondary mode-btn" data-mode="off">Off</button>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Fan Speed</label>
+                            <div class="button-group">
+                                <button class="btn btn-primary fan-btn active" data-fan="auto">Auto</button>
+                                <button class="btn btn-secondary fan-btn" data-fan="low">Low</button>
+                                <button class="btn btn-secondary fan-btn" data-fan="medium">Medium</button>
+                                <button class="btn btn-secondary fan-btn" data-fan="high">High</button>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Environmental Data</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                <div class="card">
+                                    <div style="font-size: 1.5rem; font-weight: bold;" id="humidity-display">45%</div>
+                                    <div>Humidity</div>
+                                </div>
+                                <div class="card">
+                                    <div style="font-size: 1.5rem; font-weight: bold;" id="air-quality">Good</div>
+                                    <div>Air Quality</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security System -->
+                    <div class="device-control">
+                        <div class="device-header">
+                            <div class="device-icon" style="background-color: #e74c3c;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="device-title">Security System</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">System Status</label>
+                            <div style="text-align: center; margin: 15px 0;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;" id="security-status-display">ARMED</div>
+                                <div style="margin-top: 10px;">
+                                    <button class="btn btn-danger" id="disarm-btn" style="margin-right: 10px;">Disarm</button>
+                                    <button class="btn btn-success" id="arm-btn">Arm</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Camera Feeds</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                <div class="camera-feed" data-camera="front-door">
+                                    <div style="background: #2c3e50; height: 100px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">
+                                        Front Door
+                                    </div>
+                                    <div style="text-align: center; margin-top: 5px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked data-camera-toggle="front-door">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="camera-feed" data-camera="back-yard">
+                                    <div style="background: #2c3e50; height: 100px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">
+                                        Back Yard
+                                    </div>
+                                    <div style="text-align: center; margin-top: 5px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" checked data-camera-toggle="back-yard">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="camera-feed" data-camera="garage">
+                                    <div style="background: #2c3e50; height: 100px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">
+                                        Garage
+                                    </div>
+                                    <div style="text-align: center; margin-top: 5px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" data-camera-toggle="garage">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="camera-feed" data-camera="living-room">
+                                    <div style="background: #2c3e50; height: 100px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">
+                                        Living Room
+                                    </div>
+                                    <div style="text-align: center; margin-top: 5px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" data-camera-toggle="living-room">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Sensor Status</label>
+                            <div style="margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Front Door</span>
+                                    <span style="color: #2ecc71;" id="front-door-status">Closed</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Back Door</span>
+                                    <span style="color: #2ecc71;" id="back-door-status">Closed</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Garage</span>
+                                    <span style="color: #e74c3c;" id="garage-status">Open</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Motion Sensor</span>
+                                    <span style="color: #2ecc71;" id="motion-status">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Energy Management -->
+                    <div class="device-control">
+                        <div class="device-header">
+                            <div class="device-icon" style="background-color: #2ecc71;">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="device-title">Energy Management</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Current Usage</label>
+                            <div style="text-align: center; margin: 15px 0;">
+                                <div style="font-size: 2rem; font-weight: bold;" id="current-usage">1.2 kW</div>
+                                <div>Estimated Cost: <span id="energy-cost">$0.18</span>/hr</div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Solar Production</label>
+                            <div style="text-align: center; margin: 15px 0;">
+                                <div style="font-size: 2rem; font-weight: bold;" id="solar-output">0.8 kW</div>
+                                <div>Today: <span id="solar-today">12.4</span> kWh generated</div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Device Consumption</label>
+                            <div style="margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>HVAC System</span>
+                                    <span id="hvac-consumption">0.8 kW</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Kitchen Appliances</span>
+                                    <span id="appliance-consumption">0.3 kW</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Lighting</span>
+                                    <span id="lighting-consumption">0.1 kW</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Entertainment</span>
+                                    <span id="entertainment-consumption">0.2 kW</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Optimization</label>
+                            <div class="button-group">
+                                <button class="btn btn-primary" id="eco-mode">Eco Mode</button>
+                                <button class="btn btn-secondary" id="schedule-btn">Schedule</button>
+                                <button class="btn btn-secondary" id="report-btn">Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Exit Section -->
+            <section id="exit" class="content-section">
+                <div class="exit-container">
+                    <h2>Session Summary</h2>
+                    <p>Thank you for using HomeSync IoT Smart Home Dashboard.</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="session-duration">42</div>
+                            <div class="stat-label">Minutes Active</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="commands-executed">18</div>
+                            <div class="stat-label">Commands Executed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="devices-managed">24</div>
+                            <div class="stat-label">Devices Managed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="energy-saved">3.2</div>
+                            <div class="stat-label">kWh Saved</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-primary" id="return-dashboard" style="margin-right: 15px;">
+                            <i class="fas fa-arrow-left"></i> Return to Dashboard
+                        </button>
+                        <button class="btn btn-danger" id="close-app">
+                            <i class="fas fa-power-off"></i> Close Application
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 40px; font-size: 0.9rem; color: #95a5a6;">
+                        <p>HomeSync IoT Smart Home Management System</p>
+                        <p>© 2023 HomeSync Technologies. All rights reserved.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Notifications -->
+    <div class="modal" id="notifications-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Notifications</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="activity-item">
+                    <div class="activity-icon" style="background-color: #e74c3c;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>Garage door left open for more than 30 minutes</p>
+                        <div class="activity-time">10 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon" style="background-color: #f39c12;">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>Living room lights on with no motion detected</p>
+                        <div class="activity-time">25 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon" style="background-color: #3498db;">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>HVAC system efficiency below optimal level</p>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Settings -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="control-group">
+                    <label class="control-label">Theme</label>
+                    <div class="button-group">
+                        <button class="btn btn-primary theme-btn active" data-theme="light">Light</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="dark">Dark</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="auto">Auto</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Notifications</label>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span>Push Notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="push-notifications">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span>Email Alerts</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="email-alerts">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Data Refresh Rate</label>
+                    <div class="slider-container">
+                        <input type="range" min="5" max="60" value="15" class="slider" id="refresh-rate">
+                        <span class="slider-value" id="refresh-value">15s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const appState = {
+            lighting: {
+                brightness: 75,
+                colorTemp: 50,
+                scenes: {
+                    home: { brightness: 80, colorTemp: 50 },
+                    movie: { brightness: 20, colorTemp: 30 },
+                    sleep: { brightness: 5, colorTemp: 20 },
+                    party: { brightness: 100, colorTemp: 80 },
+                    read: { brightness: 90, colorTemp: 70 },
+                    kitchen: { brightness: 95, colorTemp: 90 }
+                },
+                lights: {
+                    'living-room': true,
+                    'kitchen': true,
+                    'bedroom': false
+                },
+                activeScene: 'home'
+            },
+            climate: {
+                temperature: 72,
+                currentTemp: 70,
+                mode: 'cool',
+                fanSpeed: 'auto',
+                humidity: 45,
+                airQuality: 'Good'
+            },
+            security: {
+                status: 'armed',
+                cameras: {
+                    'front-door': true,
+                    'back-yard': true,
+                    'garage': false,
+                    'living-room': false
+                },
+                sensors: {
+                    'front-door': 'closed',
+                    'back-door': 'closed',
+                    'garage': 'open',
+                    'motion': 'normal'
+                }
+            },
+            energy: {
+                usage: 1.2,
+                solar: 0.8,
+                solarToday: 12.4,
+                cost: 0.18,
+                consumption: {
+                    hvac: 0.8,
+                    appliances: 0.3,
+                    lighting: 0.1,
+                    entertainment: 0.2
+                }
+            },
+            session: {
+                duration: 42,
+                commands: 18,
+                devices: 24,
+                energySaved: 3.2
+            },
+            activity: [
+                { type: 'climate', message: 'Climate control adjusted to 72°F', time: '2 minutes ago' },
+                { type: 'lighting', message: 'Kitchen lights turned on', time: '5 minutes ago' },
+                { type: 'security', message: 'Security system armed', time: '15 minutes ago' },
+                { type: 'energy', message: 'Energy usage optimized', time: '1 hour ago' },
+                { type: 'entertainment', message: 'Entertainment system activated in living room', time: '2 hours ago' }
+            ]
+        };
+
+        // DOM Elements
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const pageTitle = document.getElementById('page-title');
+        const notificationsBtn = document.getElementById('notifications-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const userBtn = document.getElementById('user-btn');
+        const notificationsModal = document.getElementById('notifications-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        const activityFeed = document.getElementById('activity-feed');
+        const clearActivityBtn = document.getElementById('clear-activity');
+
+        // Page titles for each section
+        const pageTitles = {
+            dashboard: 'Dashboard',
+            objective: 'Project Objective',
+            architecture: 'System Architecture',
+            prototype: 'Interactive Prototype',
+            exit: 'Session Summary'
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeDashboard();
+            initializeLightingControls();
+            initializeClimateControls();
+            initializeSecurityControls();
+            initializeEnergyControls();
+            initializeModals();
+            initializeActivityFeed();
+            startSimulation();
+        });
+
+        // Navigation System
+        function initializeNavigation() {
+            // Initialize first section as active
+            contentSections[0].classList.add('active');
+            
+            // Navigation click handler
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get target section
+                    const targetId = this.getAttribute('data-target');
+                    
+                    // Update active nav link
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update active content section
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === targetId) {
+                            section.classList.add('active');
+                        }
+                    });
+                    
+                    // Update page title
+                    pageTitle.textContent = pageTitles[targetId];
+                    
+                    // Add activity
+                    addActivity('navigation', `Navigated to ${pageTitles[targetId]}`);
+                });
+            });
+            
+            // Dashboard card clicks
+            document.querySelectorAll('.card[data-device]').forEach(card => {
+                card.addEventListener('click', function() {
+                    const device = this.getAttribute('data-device');
+                    // Navigate to prototype section
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    document.querySelector('[data-target="prototype"]').classList.add('active');
+                    
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === 'prototype') {
+                            section.classList.add('active');
+                        }
+                    });
+                    
+                    pageTitle.textContent = 'Interactive Prototype';
+                    
+                    // Scroll to the specific device control
+                    setTimeout(() => {
+                        const deviceControl = document.querySelector(`.device-control .device-icon[style*="${getDeviceColor(device)}"]`).closest('.device-control');
+                        if (deviceControl) {
+                            deviceControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Add highlight effect
+                            deviceControl.style.boxShadow = '0 0 0 3px ' + getDeviceColor(device);
+                            setTimeout(() => {
+                                deviceControl.style.boxShadow = '';
+                            }, 2000);
+                        }
+                    }, 100);
+                    
+                    addActivity('navigation', `Opened ${device} controls from dashboard`);
+                });
+            });
+            
+            // Feature card interactions
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const feature = this.getAttribute('data-feature');
+                    const featureNames = {
+                        'realtime': 'Real-time Synchronization',
+                        'responsive': 'Responsive Design',
+                        'secure': 'Secure Architecture',
+                        'energy': 'Energy Efficiency'
+                    };
+                    
+                    // Add highlight effect
+                    this.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 300);
+                    
+                    addActivity('info', `Viewed details for ${featureNames[feature]}`);
+                });
+            });
+            
+            // Architecture layer interactions
+            document.querySelectorAll('.layer, .legend-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const layer = this.getAttribute('data-layer');
+                    const layerNames = {
+                        'presentation': 'Presentation Layer',
+                        'application': 'Application Layer',
+                        'integration': 'Integration Layer',
+                        'edge': 'Edge Computing Layer',
+                        'device': 'Device Layer'
+                    };
+                    
+                    // Add highlight effect to both layer and legend
+                    const layerElement = document.querySelector(`.layer[data-layer="${layer}"]`);
+                    const legendElement = document.querySelector(`.legend-item[data-layer="${layer}"]`);
+                    
+                    if (layerElement) {
+                        layerElement.style.transform = 'scale(1.05)';
+                        setTimeout(() => {
+                            layerElement.style.transform = '';
+                        }, 500);
+                    }
+                    
+                    if (legendElement) {
+                        legendElement.style.transform = 'translateY(-5px)';
+                        setTimeout(() => {
+                            legendElement.style.transform = '';
+                        }, 500);
+                    }
+                    
+                    addActivity('info', `Selected ${layerNames[layer]} in architecture diagram`);
+                });
+            });
+        }
+
+        // Dashboard initialization
+        function initializeDashboard() {
+            updateDashboard();
+        }
+
+        // Lighting Controls
+        function initializeLightingControls() {
+            const brightnessSlider = document.getElementById('brightness-slider');
+            const brightnessValue = document.getElementById('brightness-value');
+            const tempSlider = document.getElementById('temp-slider');
+            const tempValue = document.getElementById('temp-value');
+            const sceneButtons = document.querySelectorAll('.scene-btn');
+            const lightToggles = document.querySelectorAll('input[data-light]');
+            
+            // Brightness slider
+            brightnessSlider.addEventListener('input', function() {
+                const value = this.value;
+                brightnessValue.textContent = `${value}%`;
+                appState.lighting.brightness = parseInt(value);
+                updateLightingDashboard();
+                addActivity('lighting', `Brightness adjusted to ${value}%`);
+            });
+            
+            // Color temperature slider
+            tempSlider.addEventListener('input', function() {
+                const val = parseInt(this.value);
+                let tempText;
+                if (val < 33) {
+                    tempText = 'Warm';
+                } else if (val < 66) {
+                    tempText = 'Neutral';
+                } else {
+                    tempText = 'Cool';
+                }
+                tempValue.textContent = tempText;
+                appState.lighting.colorTemp = val;
+                addActivity('lighting', `Color temperature set to ${tempText.toLowerCase()}`);
+            });
+            
+            // Scene buttons
+            sceneButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const scene = this.getAttribute('data-scene');
+                    
+                    // Update button states
+                    sceneButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-secondary');
+                    });
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-primary');
+                    
+                    // Apply scene settings
+                    const sceneSettings = appState.lighting.scenes[scene];
+                    brightnessSlider.value = sceneSettings.brightness;
+                    brightnessValue.textContent = `${sceneSettings.brightness}%`;
+                    tempSlider.value = sceneSettings.colorTemp;
+                    
+                    const tempVal = parseInt(sceneSettings.colorTemp);
+                    let tempText;
+                    if (tempVal < 33) {
+                        tempText = 'Warm';
+                    } else if (tempVal < 66) {
+                        tempText = 'Neutral';
+                    } else {
+                        tempText = 'Cool';
+                    }
+                    tempValue.textContent = tempText;
+                    
+                    appState.lighting.brightness = sceneSettings.brightness;
+                    appState.lighting.colorTemp = sceneSettings.colorTemp;
+                    appState.lighting.activeScene = scene;
+                    
+                    updateLightingDashboard();
+                    addActivity('lighting', `Activated ${scene} lighting scene`);
+                });
+            });
+            
+            // Light toggles
+            lightToggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const light = this.getAttribute('data-light');
+                    const isOn = this.checked;
+                    appState.lighting.lights[light] = isOn;
+                    
+                    // Update lighting count
+                    const onLights = Object.values(appState.lighting.lights).filter(val => val).length;
+                    document.getElementById('lighting-count').textContent = onLights;
+                    
+                    addActivity('lighting', `${this.checked ? 'Turned on' : 'Turned off'} ${light.replace('-', ' ')} lights`);
+                });
+            });
+        }
+
+        // Climate Controls
+        function initializeClimateControls() {
+            const tempDisplay = document.getElementById('temp-display');
+            const tempUp = document.getElementById('temp-up');
+            const tempDown = document.getElementById('temp-down');
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const fanButtons = document.querySelectorAll('.fan-btn');
+            
+            // Temperature controls
+            tempUp.addEventListener('click', function() {
+                appState.climate.temperature++;
+                tempDisplay.textContent = `${appState.climate.temperature}°F`;
+                updateClimateDashboard();
+                addActivity('climate', `Temperature set to ${appState.climate.temperature}°F`);
+            });
+            
+            tempDown.addEventListener('click', function() {
+                appState.climate.temperature--;
+                tempDisplay.textContent = `${appState.climate.temperature}°F`;
+                updateClimateDashboard();
+                addActivity('climate', `Temperature set to ${appState.climate.temperature}°F`);
+            });
+            
+            // Mode buttons
+            modeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-mode');
+                    
+                    // Update button states
+                    modeButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary', 'active');
+                        btn.classList.add('btn-secondary');
+                    });
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-primary', 'active');
+                    
+                    appState.climate.mode = mode;
+                    addActivity('climate', `HVAC mode set to ${mode}`);
+                });
+            });
+            
+            // Fan buttons
+            fanButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const fan = this.getAttribute('data-fan');
+                    
+                    // Update button states
+                    fanButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary', 'active');
+                        btn.classList.add('btn-secondary');
+                    });
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-primary', 'active');
+                    
+                    appState.climate.fanSpeed = fan;
+                    addActivity('climate', `Fan speed set to ${fan}`);
+                });
+            });
+        }
+
+        // Security Controls
+        function initializeSecurityControls() {
+            const securityStatusDisplay = document.getElementById('security-status-display');
+            const disarmBtn = document.getElementById('disarm-btn');
+            const armBtn = document.getElementById('arm-btn');
+            const cameraToggles = document.querySelectorAll('input[data-camera-toggle]');
+            const cameraFeeds = document.querySelectorAll('.camera-feed');
+            
+            // Arm/Disarm buttons
+            disarmBtn.addEventListener('click', function() {
+                appState.security.status = 'disarmed';
+                securityStatusDisplay.textContent = 'DISARMED';
+                securityStatusDisplay.style.color = '#2ecc71';
+                updateSecurityDashboard();
+                addActivity('security', 'Security system disarmed');
+            });
+            
+            armBtn.addEventListener('click', function() {
+                appState.security.status = 'armed';
+                securityStatusDisplay.textContent = 'ARMED';
+                securityStatusDisplay.style.color = '#e74c3c';
+                updateSecurityDashboard();
+                addActivity('security', 'Security system armed');
+            });
+            
+            // Camera toggles
+            cameraToggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const camera = this.getAttribute('data-camera-toggle');
+                    const isOn = this.checked;
+                    appState.security.cameras[camera] = isOn;
+                    
+                    // Update camera count
+                    const activeCameras = Object.values(appState.security.cameras).filter(val => val).length;
+                    document.getElementById('camera-count').textContent = activeCameras;
+                    
+                    addActivity('security', `${this.checked ? 'Enabled' : 'Disabled'} ${camera.replace('-', ' ')} camera`);
+                });
+            });
+            
+            // Camera feed clicks
+            cameraFeeds.forEach(feed => {
+                feed.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const camera = this.getAttribute('data-camera');
+                        addActivity('security', `Viewed ${camera.replace('-', ' ')} camera feed`);
+                    }
+                });
+            });
+            
+            // Sensor status interactions
+            const sensorElements = {
+                'front-door': document.getElementById('front-door-status'),
+                'back-door': document.getElementById('back-door-status'),
+                'garage': document.getElementById('garage-status'),
+                'motion': document.getElementById('motion-status')
+            };
+            
+            Object.keys(sensorElements).forEach(sensor => {
+                if (sensorElements[sensor]) {
+                    sensorElements[sensor].addEventListener('click', function() {
+                        const currentStatus = appState.security.sensors[sensor];
+                        addActivity('security', `Checked ${sensor.replace('-', ' ')} sensor: ${currentStatus}`);
+                    });
+                }
+            });
+        }
+
+        // Energy Controls
+        function initializeEnergyControls() {
+            const ecoModeBtn = document.getElementById('eco-mode');
+            const scheduleBtn = document.getElementById('schedule-btn');
+            const reportBtn = document.getElementById('report-btn');
+            
+            // Energy optimization buttons
+            ecoModeBtn.addEventListener('click', function() {
+                // Simulate energy savings
+                appState.energy.usage = 0.9;
+                appState.session.energySaved += 0.5;
+                
+                updateEnergyDashboard();
+                updateSessionStats();
+                
+                this.classList.toggle('active');
+                if (this.classList.contains('active')) {
+                    this.textContent = 'Eco Mode: ON';
+                    addActivity('energy', 'Eco mode activated');
+                } else {
+                    this.textContent = 'Eco Mode';
+                    addActivity('energy', 'Eco mode deactivated');
+                }
+            });
+            
+            scheduleBtn.addEventListener('click', function() {
+                addActivity('energy', 'Opened energy schedule settings');
+            });
+            
+            reportBtn.addEventListener('click', function() {
+                addActivity('energy', 'Generated energy consumption report');
+            });
+        }
+
+        // Modals
+        function initializeModals() {
+            // Notifications modal
+            notificationsBtn.addEventListener('click', function() {
+                notificationsModal.style.display = 'flex';
+                // Clear notification badge
+                const badge = this.querySelector('.notification-badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            });
+            
+            // Settings modal
+            settingsBtn.addEventListener('click', function() {
+                settingsModal.style.display = 'flex';
+            });
+            
+            // User button
+            userBtn.addEventListener('click', function() {
+                addActivity('user', 'Opened user profile');
+                alert('User profile would open here in a full application');
+            });
+            
+            // Close modals
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    notificationsModal.style.display = 'none';
+                    settingsModal.style.display = 'none';
+                });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === notificationsModal) {
+                    notificationsModal.style.display = 'none';
+                }
+                if (e.target === settingsModal) {
+                    settingsModal.style.display = 'none';
+                }
+            });
+            
+            // Settings controls
+            const themeButtons = document.querySelectorAll('.theme-btn');
+            const pushNotifications = document.getElementById('push-notifications');
+            const emailAlerts = document.getElementById('email-alerts');
+            const refreshRate = document.getElementById('refresh-rate');
+            const refreshValue = document.getElementById('refresh-value');
+            
+            themeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    
+                    // Update button states
+                    themeButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary', 'active');
+                        btn.classList.add('btn-secondary');
+                    });
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-primary', 'active');
+                    
+                    addActivity('settings', `Theme changed to ${theme}`);
+                });
+            });
+            
+            pushNotifications.addEventListener('change', function() {
+                addActivity('settings', `Push notifications ${this.checked ? 'enabled' : 'disabled'}`);
+            });
+            
+            emailAlerts.addEventListener('change', function() {
+                addActivity('settings', `Email alerts ${this.checked ? 'enabled' : 'disabled'}`);
+            });
+            
+            refreshRate.addEventListener('input', function() {
+                refreshValue.textContent = `${this.value}s`;
+                addActivity('settings', `Data refresh rate set to ${this.value} seconds`);
+            });
+        }
+
+        // Activity Feed
+        function initializeActivityFeed() {
+            updateActivityFeed();
+            
+            // Clear activity button
+            clearActivityBtn.addEventListener('click', function() {
+                appState.activity = [];
+                updateActivityFeed();
+                addActivity('system', 'Activity feed cleared');
+            });
+        }
+
+        // Update functions
+        function updateDashboard() {
+            updateLightingDashboard();
+            updateClimateDashboard();
+            updateSecurityDashboard();
+            updateEnergyDashboard();
+            updateSessionStats();
+        }
+
+        function updateLightingDashboard() {
+            document.getElementById('lighting-brightness').textContent = `${appState.lighting.brightness}%`;
+            
+            const onLights = Object.values(appState.lighting.lights).filter(val => val).length;
+            document.getElementById('lighting-count').textContent = onLights;
+        }
+
+        function updateClimateDashboard() {
+            document.getElementById('current-temp').textContent = `${appState.climate.temperature}°F`;
+            document.getElementById('current-humidity').textContent = `${appState.climate.humidity}%`;
+            document.getElementById('current-climate-temp').textContent = `${appState.climate.currentTemp}°F`;
+            document.getElementById('humidity-display').textContent = `${appState.climate.humidity}%`;
+            document.getElementById('air-quality').textContent = appState.climate.airQuality;
+        }
+
+        function updateSecurityDashboard() {
+            const statusElement = document.getElementById('security-status');
+            const statusText = document.getElementById('security-status-text');
+            
+            if (appState.security.status === 'armed') {
+                statusElement.className = 'status-indicator status-warning';
+                statusText.textContent = 'Armed';
+            } else {
+                statusElement.className = 'status-indicator status-online';
+                statusText.textContent = 'Disarmed';
+            }
+            
+            const activeCameras = Object.values(appState.security.cameras).filter(val => val).length;
+            document.getElementById('camera-count').textContent = activeCameras;
+            
+            // Update sensor status in security control
+            document.getElementById('front-door-status').textContent = appState.security.sensors['front-door'];
+            document.getElementById('back-door-status').textContent = appState.security.sensors['back-door'];
+            document.getElementById('garage-status').textContent = appState.security.sensors['garage'];
+            document.getElementById('motion-status').textContent = appState.security.sensors['motion'];
+            
+            // Update sensor status colors
+            const sensorElements = {
+                'front-door': document.getElementById('front-door-status'),
+                'back-door': document.getElementById('back-door-status'),
+                'garage': document.getElementById('garage-status'),
+                'motion': document.getElementById('motion-status')
+            };
+            
+            Object.keys(sensorElements).forEach(sensor => {
+                if (sensorElements[sensor]) {
+                    const status = appState.security.sensors[sensor];
+                    sensorElements[sensor].style.color = status === 'open' ? '#e74c3c' : '#2ecc71';
+                }
+            });
+        }
+
+        function updateEnergyDashboard() {
+            document.getElementById('energy-usage').textContent = appState.energy.usage.toFixed(1);
+            document.getElementById('solar-production').textContent = appState.energy.solar.toFixed(1);
+            document.getElementById('current-usage').textContent = `${appState.energy.usage.toFixed(1)} kW`;
+            document.getElementById('energy-cost').textContent = `$${appState.energy.cost.toFixed(2)}`;
+            document.getElementById('solar-output').textContent = `${appState.energy.solar.toFixed(1)} kW`;
+            document.getElementById('solar-today').textContent = appState.energy.solarToday.toFixed(1);
+            document.getElementById('hvac-consumption').textContent = `${appState.energy.consumption.hvac.toFixed(1)} kW`;
+            document.getElementById('appliance-consumption').textContent = `${appState.energy.consumption.appliances.toFixed(1)} kW`;
+            document.getElementById('lighting-consumption').textContent = `${appState.energy.consumption.lighting.toFixed(1)} kW`;
+            document.getElementById('entertainment-consumption').textContent = `${appState.energy.consumption.entertainment.toFixed(1)} kW`;
+        }
+
+        function updateSessionStats() {
+            document.getElementById('session-duration').textContent = appState.session.duration;
+            document.getElementById('commands-executed').textContent = appState.session.commands;
+            document.getElementById('devices-managed').textContent = appState.session.devices;
+            document.getElementById('energy-saved').textContent = appState.session.energySaved.toFixed(1);
+        }
+
+        function updateActivityFeed() {
+            activityFeed.innerHTML = '';
+            
+            appState.activity.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                
+                const iconColors = {
+                    'lighting': '#f39c12',
+                    'climate': '#3498db',
+                    'security': '#e74c3c',
+                    'energy': '#2ecc71',
+                    'entertainment': '#9b59b6',
+                    'appliances': '#1abc9c',
+                    'navigation': '#34495e',
+                    'user': '#e67e22',
+                    'settings': '#95a5a6',
+                    'system': '#7f8c8d',
+                    'info': '#3498db'
+                };
+                
+                const iconIcons = {
+                    'lighting': 'fa-lightbulb',
+                    'climate': 'fa-thermometer-half',
+                    'security': 'fa-shield-alt',
+                    'energy': 'fa-bolt',
+                    'entertainment': 'fa-tv',
+                    'appliances': 'fa-blender',
+                    'navigation': 'fa-compass',
+                    'user': 'fa-user',
+                    'settings': 'fa-cog',
+                    'system': 'fa-info-circle',
+                    'info': 'fa-info-circle'
+                };
+                
+                activityItem.innerHTML = `
+                    <div class="activity-icon" style="background-color: ${iconColors[activity.type] || '#95a5a6'};">
+                        <i class="fas ${iconIcons[activity.type] || 'fa-info-circle'}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>${activity.message}</p>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                `;
+                
+                activityFeed.appendChild(activityItem);
+            });
+        }
+
+        function addActivity(type, message) {
+            const now = new Date();
+            const timeString = getRelativeTime(now);
+            
+            appState.activity.unshift({
+                type: type,
+                message: message,
+                time: timeString
+            });
+            
+            // Limit activity to 50 items
+            if (appState.activity.length > 50) {
+                appState.activity = appState.activity.slice(0, 50);
+            }
+            
+            // Increment commands executed
+            appState.session.commands++;
+            updateSessionStats();
+            
+            updateActivityFeed();
+        }
+
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins < 60) {
+                return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        function getDeviceColor(device) {
+            const colors = {
+                'lighting': '#f39c12',
+                'climate': '#3498db',
+                'security': '#e74c3c',
+                'energy': '#2ecc71',
+                'entertainment': '#9b59b6',
+                'appliances': '#1abc9c',
+                'irrigation': '#34495e',
+                'pool': '#e67e22'
+            };
+            
+            return colors[device] || '#95a5a6';
+        }
+
+        // Simulation for real-time data
+        function startSimulation() {
+            // Update session duration every minute
+            setInterval(() => {
+                appState.session.duration++;
+                updateSessionStats();
+            }, 60000);
+            
+            // Simulate temperature changes
+            setInterval(() => {
+                // Random small temperature fluctuation
+                const change = (Math.random() - 0.5) * 0.5;
+                appState.climate.currentTemp += change;
+                document.getElementById('current-climate-temp').textContent = `${appState.climate.currentTemp.toFixed(1)}°F`;
+            }, 10000);
+            
+            // Simulate energy usage changes
+            setInterval(() => {
+                // Random small energy usage fluctuation
+                const change = (Math.random() - 0.5) * 0.1;
+                appState.energy.usage = Math.max(0.5, appState.energy.usage + change);
+                updateEnergyDashboard();
+            }, 15000);
+            
+            // Simulate solar production changes
+            setInterval(() => {
+                // Simulate daily solar production pattern
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const timeOfDay = hours + minutes / 60;
+                
+                // Peak around noon, zero at night
+                let solarFactor = 0;
+                if (timeOfDay >= 6 && timeOfDay <= 18) {
+                    const peakTime = 12;
+                    solarFactor = Math.cos((timeOfDay - peakTime) * Math.PI / 6) * 0.5 + 0.5;
+                }
+                
+                appState.energy.solar = solarFactor * 1.6; // Max 1.6 kW
+                updateEnergyDashboard();
+            }, 30000);
+            
+            // Simulate occasional sensor changes
+            setInterval(() => {
+                if (Math.random() < 0.1) { // 10% chance every interval
+                    const sensors = ['front-door', 'back-door', 'garage'];
+                    const randomSensor = sensors[Math.floor(Math.random() * sensors.length)];
+                    const currentStatus = appState.security.sensors[randomSensor];
+                    
+                    if (currentStatus === 'closed') {
+                        appState.security.sensors[randomSensor] = 'open';
+                        addActivity('security', `${randomSensor.replace('-', ' ')} opened`);
+                    } else {
+                        appState.security.sensors[randomSensor] = 'closed';
+                        addActivity('security', `${randomSensor.replace('-', ' ')} closed`);
+                    }
+                    
+                    updateSecurityDashboard();
+                }
+            }, 30000);
+            
+            // Return to Dashboard from Exit
+            document.getElementById('return-dashboard').addEventListener('click', function() {
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                document.querySelector('[data-target="dashboard"]').classList.add('active');
+                
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === 'dashboard') {
+                        section.classList.add('active');
+                    }
+                });
+                
+                pageTitle.textContent = 'Dashboard';
+                addActivity('navigation', 'Returned to dashboard from exit section');
+            });
+            
+            // Close Application
+            document.getElementById('close-app').addEventListener('click', function() {
+                if (confirm('Are you sure you want to close the application?')) {
+                    addActivity('system', 'Application closed');
+                    alert('Thank you for using HomeSync. In a production environment, this would log out the user and close the session.');
+                    // In a real app, this would redirect to login or close the window
+                }
+            });
+        }
+    </script>
+</body>
+</html>
